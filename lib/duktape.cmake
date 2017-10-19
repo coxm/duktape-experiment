@@ -26,3 +26,9 @@ set_target_properties(
 	PROPERTIES SOVERSION
 	${DUKTAPE_VERSION}
 )
+target_include_directories(${DUKTAPE_LIBRARY} PUBLIC ${DUKTAPE_INCLUDE_DIRS})
+target_compile_options(
+	${DUKTAPE_LIBRARY}
+	PUBLIC
+	${CMAKE_CXX_FLAGS} ${EXTRA_CXX_FLAGS}
+)

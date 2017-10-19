@@ -7,12 +7,47 @@ set (PROJECT_NAME dukdemo)
 project (${PROJECT_NAME})
 
 
+find_library(LIB_SDL SDL2 REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+
+
 include(lib/duktape.cmake)
+include(lib/easyloggingpp.cmake)
 
 
-set (EXTRA_CXX_FLAGS
-	"-Werror -std=c++1y -Wall -Weffc++ -Wold-style-cast -Woverloaded-virtual -Wno-int-conversions -Wsign-promo")
+set(
+	DEP_LIBS
+	${DUKTAPE_LIBRARY}
+	${EASYLOGGINGPP_LIBRARY}
+	${LIB_SDL}
+	${OPENGL_LIBRARIES}
+	${GLEW_LIBRARIES}
+)
+set(ALL_LIBS ${DEP_LIBS})
 
+
+file (
+	GLOB
+	CPP_SOURCES
+	"${CMAKE_SOURCE_DIR}/src/*.cpp"
+	"${CMAKE_SOURCE_DIR}/src/render/*.cpp"
+)
+add_executable(${PROJECT_NAME} ${CPP_SOURCES})
+target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
+target_include_directories(
+	${PROJECT_NAME}
+	PUBLIC
+	"${CMAKE_SOURCE_DIR}/include"
+	"${DUKTAPE_INCLUDE_DIRS}"
+	"${EASYLOGGINGPP_INCLUDE_DIRS}"
+)
+
+
+# Compiler flags.
+set(CXX_FLAGS_BASE -Werror -std=c++1z -Wall -Weffc++ -Wold-style-cast -Woverloaded-virtual -Wno-int-conversions -Wsign-promo -Wno-pmf-conversions)
+set(CXX_FLAGS_GNU ${CXX_FLAGS_BASE})
+set(CXX_FLAGS_CLANG ${CXX_FLAGS_BASE})
 
 # TODO: Check the gdb version (how?) and pick the appropriate flags
 # accordingly.
@@ -20,29 +55,14 @@ set (EXTRA_CXX_FLAGS
 # set (CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb ${EXTRA_CXX_FLAGS}")
 set (CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb3 -gdwarf-2 ${EXTRA_CXX_FLAGS}")
 
+
 if(${CMAKE_COMPILER_IS_GNUCXX})
-	set(EXTRA_CXX_FLAGS "${EXTRA_CXX_FLAGS} -Wno-pmf-conversions")
+	set(EXTRA_CXX_FLAGS ${EXTRA_CXX_FLAGS} ${CXX_FLAGS_GNU})
+else()
+	set(EXTRA_CXX_FLAGS ${EXTRA_CXX_FLAGS} ${CXX_FLAGS_CLANG})
 endif()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_CXX_FLAGS}")
-
-
-# find_library(LIB_SDL SDL2)
-# find_package(OpenGL REQUIRED)
-# find_package(GLEW REQUIRED)
-
-
-message(STATUS "duktape dir ${DUKTAPE_INCLUDE_DIR}")
-include_directories(
-  "${CMAKE_SOURCE_DIR}/include"
-  "${DUKTAPE_INCLUDE_DIRS}"
+target_compile_options(
+	${PROJECT_NAME}
+	PUBLIC
+	${CMAKE_CXX_FLAGS} ${EXTRA_CXX_FLAGS}
 )
-
-
-# TODO: add ${LIB_SDL} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES}
-set(DEP_LIBS ${DUKTAPE_LIBRARY})
-set(ALL_LIBS ${DEP_LIBS})
-
-
-add_executable(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/src/main.cpp")
-message(STATUS "linking target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})")
-target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})

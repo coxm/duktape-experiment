@@ -37,6 +37,7 @@ set(
 	DEP_LIBS
 	${DUKTAPE_LIBRARY}
 	${EASYLOGGINGPP_LIBRARY}
+	${LIB_B2DRAW}
 	${LIB_SDL}
 	${LIB_BOX2D}
 	${OPENGL_LIBRARIES}
@@ -56,15 +57,18 @@ target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
 include_directories(
 	"${CMAKE_SOURCE_DIR}/include"
 	"${DUKTAPE_INCLUDE_DIRS}"
-	"${EASYLOGGINGPP_INCLUDE_DIRS}"
 )
+include_directories(SYSTEM "${EASYLOGGINGPP_INCLUDE_DIRS}")
 if(SDL2_INCLUDE_DIR)
 	include_directories("${SDL2_INCLUDE_DIR}")
 endif()
 if(BOX2D_INCLUDE_DIR)
-	include_directories("${BOX2D_INCLUDE_DIR}")
+	include_directories(SYSTEM "${BOX2D_INCLUDE_DIR}")
 endif()
 if(B2DRAW_INCLUDE_DIR)
 	include_directories("${B2DRAW_INCLUDE_DIR}")
+endif()
+if(GLM_INCLUDE_DIR)
+	include_directories(SYSTEM "${GLM_INCLUDE_DIR}")
 endif()
 target_compile_options("${PROJECT_NAME}" PUBLIC ${MAIN_CXX_FLAGS})

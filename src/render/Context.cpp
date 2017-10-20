@@ -2,7 +2,9 @@
 #include <SDL2/SDL_opengl.h>
 #include <GL/glu.h>
 
-#include "dukdemo/logging.h"
+#include <easylogging++.h>
+
+#include "dukdemo/render/util.h"
 #include "dukdemo/render/Context.h"
 
 
@@ -33,8 +35,8 @@ Context::Context(
 		throw std::runtime_error{"Failed to initialise window"};
 	}
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 	SDL_GL_SetAttribute(
 		SDL_GL_CONTEXT_PROFILE_MASK,
 		SDL_GL_CONTEXT_PROFILE_CORE
@@ -55,7 +57,7 @@ Context::Context(
 	LOG_IF(setSwapIntervalSucceeded, INFO) << "No VSync: " << SDL_GetError();
 	LOG_IF(not setSwapIntervalSucceeded, INFO) << "VSync enabled";
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);

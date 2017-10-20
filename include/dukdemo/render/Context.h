@@ -1,3 +1,5 @@
+#ifndef DUKDEMO_INCLUDE__DUKDEMO__RENDER__CONTEXT__H
+#define DUKDEMO_INCLUDE__DUKDEMO__RENDER__CONTEXT__H
 #include <type_traits>
 #include <memory>
 #include <functional>
@@ -42,7 +44,7 @@ public:
 
 	Context(
 		char const* const pWindowName,
-		RenderFn const& onRender,
+		RenderFn const& onRender = nullptr,
 		Uint32 windowX = s_defaultWindowX,
 		Uint32 windowY = s_defaultWindowY,
 		Uint32 windowWidth = s_defaultWindowWidth,
@@ -56,14 +58,28 @@ public:
 	Context& operator=(Context&&) noexcept;
 	~Context() noexcept;
 
-	inline void
-	setOnRender(RenderFn const& onRender)
+	inline void setOnRender(RenderFn const& onRender)
 	{
 		m_onRender = onRender;
 	}
 
-	void
-	render();
+	void render();
+
+	inline SDL_Window* window() noexcept
+	{ return m_pWindow.get(); }
+	inline SDL_Window const* window() const noexcept
+	{ return m_pWindow.get(); }
+
+	inline SDL_GLContext glContext() noexcept
+	{ return m_pGLContext.get(); }
+	inline GLContext const* glContext() const noexcept
+	{ return m_pGLContext.get(); }
+
+	inline void reset() noexcept
+	{
+		m_pGLContext.reset();
+		m_pWindow.reset();
+	}
 
 private:
 	RenderFn m_onRender;
@@ -75,3 +91,4 @@ private:
 
 } // namespace render
 } // namespace dukdemo
+#endif // #ifndef DUKDEMO_INCLUDE__DUKDEMO__RENDER__CONTEXT__H

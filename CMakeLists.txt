@@ -8,7 +8,7 @@ project (${PROJECT_NAME} LANGUAGES CXX C VERSION 1.0.0)
 
 
 # Compiler flags.
-set(MAIN_CXX_FLAGS
+list(APPEND MAIN_CXX_FLAGS
 	-Werror -std=c++1z -Wall -Wold-style-cast -Woverloaded-virtual
 	-Wno-int-conversions -Wsign-promo -Wno-pmf-conversions
 )

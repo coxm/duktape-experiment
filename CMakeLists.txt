@@ -49,11 +49,7 @@ set(CXX_FLAGS_BASE -Werror -std=c++1z -Wall -Weffc++ -Wold-style-cast -Woverload
 set(CXX_FLAGS_GNU ${CXX_FLAGS_BASE})
 set(CXX_FLAGS_CLANG ${CXX_FLAGS_BASE})
 
-# TODO: Check the gdb version (how?) and pick the appropriate flags
-# accordingly.
-# See http://stackoverflow.com/questions/12595631/debugging-with-gdb-on-a-program-with-no-optimization-but-still-there-is-no-symbo#12595773 
-# set (CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb ${EXTRA_CXX_FLAGS}")
-set (CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb3 -gdwarf-2 ${EXTRA_CXX_FLAGS}")
+set (CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb3 ${EXTRA_CXX_FLAGS}")
 
 
 if(${CMAKE_COMPILER_IS_GNUCXX})

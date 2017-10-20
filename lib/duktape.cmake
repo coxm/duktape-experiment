@@ -1,5 +1,5 @@
 if(NOT DUKTAPE_PATH)
-	message(ERROR "Please define DUKTAPE_PATH")
+	message(SEND_ERROR "Please define DUKTAPE_PATH")
 endif()
 
 

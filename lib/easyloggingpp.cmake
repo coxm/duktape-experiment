@@ -1,5 +1,5 @@
 if(NOT EASYLOGGINGPP_PATH)
-	message(ERROR "Please define EASYLOGGINGPP_PATH")
+	message(SEND_ERROR "Please define EASYLOGGINGPP_PATH")
 endif()
 
 

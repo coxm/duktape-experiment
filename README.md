@@ -12,17 +12,12 @@ must be passed through to CMake by defining an approprate variable of the form
     define `EASYLOGGINGPP_PATH`.
 
 ### Build
-In-source builds are disabled, so create a build directory and invoke CMake as
-usual, making sure to define `DUKTAPE_PATH`. For example, to set up a debug
-build with `g++`:
+As usual, only the dependency paths must be defined during CMake configuration.
+For example:
 
-    root_dir=`pwd`
-    build_dir=build/g++
-    mkdir -p "$build_dir"
-    cd "$build_dir"
+    mkdir -p build
+    cd build
     cmake \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DCMAKE_CXX_COMPILER=g++ \
         -DDUKTAPE_PATH=/path/to/duktape-2.2.0/ \
         -DEASYLOGGINGPP_PATH=/path/to/easylogging-9.95.3/ \
-        "$root_dir"
+        ..

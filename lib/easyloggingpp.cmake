@@ -20,3 +20,13 @@ target_include_directories(
 	PUBLIC
 	${EASYLOGGINGPP_INCLUDE_DIRS}
 )
+
+
+# easylogging++ fails the Effective C++ checks (g++), so remove that flag.
+set(EASYLOGGINGPP_CXX_FLAGS ${MAIN_CXX_FLAGS})
+list(REMOVE_ITEM EASYLOGGINGPP_CXX_FLAGS -Weffc++)
+target_compile_options(
+	${EASYLOGGINGPP_LIBRARY}
+	PUBLIC
+	"${EASYLOGGINGPP_CXX_FLAGS}"
+)

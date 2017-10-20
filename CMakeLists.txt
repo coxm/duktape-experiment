@@ -4,14 +4,28 @@ set (CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 
 set (PROJECT_NAME dukdemo)
-project (${PROJECT_NAME})
+project (${PROJECT_NAME} LANGUAGES CXX C VERSION 1.0.0)
 
 
+# Compiler flags.
+set(MAIN_CXX_FLAGS
+	-Werror -std=c++1z -Wall -Wold-style-cast -Woverloaded-virtual
+	-Wno-int-conversions -Wsign-promo -Wno-pmf-conversions
+)
+if(CMAKE_COMPILER_IS_GNUCXX)
+	list(APPEND MAIN_CXX_FLAGS -Weffc++)
+endif()
+if(CMAKE_BUILD_TYPE EQUAL "Debug")
+	list(APPEND MAIN_CXX_FLAGS -O0 -ggdb3)
+endif()
+
+
+# System dependencies.
 find_library(LIB_SDL SDL2 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
-
+# Local dependencies.
 include(lib/duktape.cmake)
 include(lib/easyloggingpp.cmake)
 
@@ -35,30 +49,9 @@ file (
 )
 add_executable(${PROJECT_NAME} ${CPP_SOURCES})
 target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
-target_include_directories(
-	${PROJECT_NAME}
-	PUBLIC
+include_directories(
 	"${CMAKE_SOURCE_DIR}/include"
 	"${DUKTAPE_INCLUDE_DIRS}"
 	"${EASYLOGGINGPP_INCLUDE_DIRS}"
 )
-
-
-# Compiler flags.
-set(CXX_FLAGS_BASE -Werror -std=c++1z -Wall -Weffc++ -Wold-style-cast -Woverloaded-virtual -Wno-int-conversions -Wsign-promo -Wno-pmf-conversions)
-set(CXX_FLAGS_GNU ${CXX_FLAGS_BASE})
-set(CXX_FLAGS_CLANG ${CXX_FLAGS_BASE})
-
-set (CMAKE_CXX_FLAGS_DEBUG "-O0 -ggdb3 ${EXTRA_CXX_FLAGS}")
-
-
-if(${CMAKE_COMPILER_IS_GNUCXX})
-	set(EXTRA_CXX_FLAGS ${EXTRA_CXX_FLAGS} ${CXX_FLAGS_GNU})
-else()
-	set(EXTRA_CXX_FLAGS ${EXTRA_CXX_FLAGS} ${CXX_FLAGS_CLANG})
-endif()
-target_compile_options(
-	${PROJECT_NAME}
-	PUBLIC
-	${CMAKE_CXX_FLAGS} ${EXTRA_CXX_FLAGS}
-)
+target_compile_options("${PROJECT_NAME}" PUBLIC ${MAIN_CXX_FLAGS})

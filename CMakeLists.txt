@@ -20,12 +20,15 @@ if(CMAKE_BUILD_TYPE EQUAL "Debug")
 endif()
 
 
-# System dependencies.
-find_library(LIB_SDL SDL2 REQUIRED)
+# External dependencies.
+find_library(LIB_SDL SDL2 REQUIRED PATHS "${SDL2_LIBRARY_DIR}")
+find_library(LIB_BOX2D Box2D REQUIRED PATHS "${BOX2D_LIBRARY_DIR}")
+find_library(LIB_B2DRAW b2draw REQUIRED PATHS "${B2DRAW_LIBRARY_DIR}")
+
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 
-# Local dependencies.
+# Dependencies we build ourselves.
 include(lib/duktape.cmake)
 include(lib/easyloggingpp.cmake)
 
@@ -35,6 +38,7 @@ set(
 	${DUKTAPE_LIBRARY}
 	${EASYLOGGINGPP_LIBRARY}
 	${LIB_SDL}
+	${LIB_BOX2D}
 	${OPENGL_LIBRARIES}
 	${GLEW_LIBRARIES}
 )
@@ -54,4 +58,13 @@ include_directories(
 	"${DUKTAPE_INCLUDE_DIRS}"
 	"${EASYLOGGINGPP_INCLUDE_DIRS}"
 )
+if(SDL2_INCLUDE_DIR)
+	include_directories("${SDL2_INCLUDE_DIR}")
+endif()
+if(BOX2D_INCLUDE_DIR)
+	include_directories("${BOX2D_INCLUDE_DIR}")
+endif()
+if(B2DRAW_INCLUDE_DIR)
+	include_directories("${B2DRAW_INCLUDE_DIR}")
+endif()
 target_compile_options("${PROJECT_NAME}" PUBLIC ${MAIN_CXX_FLAGS})

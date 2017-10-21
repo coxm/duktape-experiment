@@ -52,6 +52,7 @@ file (
 	"${CMAKE_SOURCE_DIR}/src/*.cpp"
 	"${CMAKE_SOURCE_DIR}/src/util/*.cpp"
 	"${CMAKE_SOURCE_DIR}/src/render/*.cpp"
+	"${CMAKE_SOURCE_DIR}/src/scripting/*.cpp"
 )
 add_executable(${PROJECT_NAME} ${CPP_SOURCES})
 target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})

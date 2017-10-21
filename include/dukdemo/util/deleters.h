@@ -1,6 +1,9 @@
 #ifndef DUKDEMO_INCLUDE__DUKDEMO__UTIL__DELETERS__H
 #define DUKDEMO_INCLUDE__DUKDEMO__UTIL__DELETERS__H
-struct duk_context;
+#include <SDL2/SDL.h>
+#include <duk_config.h>
+
+
 struct SDL_Window;
 
 

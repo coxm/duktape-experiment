@@ -1,6 +1,8 @@
 #include <SDL2/SDL_video.h>
 #include <duktape.h>
 
+#include "dukdemo/util/deleters.h"
+
 
 namespace dukdemo {
 namespace util {
@@ -26,7 +28,7 @@ void
 GLContextDeleter::operator()(SDL_GLContext pGLContext)
 	noexcept
 {
-	SDL_GL_DeleteContext(pContext);
+	SDL_GL_DeleteContext(pGLContext);
 }
 
 

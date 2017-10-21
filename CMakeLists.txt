@@ -50,6 +50,7 @@ file (
 	GLOB
 	CPP_SOURCES
 	"${CMAKE_SOURCE_DIR}/src/*.cpp"
+	"${CMAKE_SOURCE_DIR}/src/util/*.cpp"
 	"${CMAKE_SOURCE_DIR}/src/render/*.cpp"
 )
 add_executable(${PROJECT_NAME} ${CPP_SOURCES})

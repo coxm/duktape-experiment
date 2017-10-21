@@ -137,14 +137,15 @@ void run(int argc, char const* const argv[])
 
 		glUniformMatrix4fv(mvpAttribLoc, 1, GL_FALSE, pMvpMatStart);
 		debugDraw.Render();
-		SDL_GL_SwapWindow(pSDLWindow);
 	};
+	renderContext.setOnRender(render);
 
 	// Ensure no GL errors.
 	dukdemo::render::checkGLErrors("Ready to render");
 
 	update();
-	render();
+	renderContext.render();
+	renderContext.render();  // TODO: Why is this second render required?
 
 	SDL_Event event;
 	bool userQuit{false};
@@ -168,7 +169,7 @@ void run(int argc, char const* const argv[])
 
 						case SDLK_s:
 							update();
-							render();
+							renderContext.render();
 							break;
 
 						default:

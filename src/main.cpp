@@ -16,11 +16,14 @@
 
 #include <easylogging++.h>
 
+#include <duktape.h>
+
 #include "b2draw/DebugDraw.h"
 
+#include "dukdemo/util/deleters.h"
 #include "dukdemo/render/Context.h"
 #include "dukdemo/render/util.h"
-#include "dukdemo/util/deleters.h"
+#include "dukdemo/scripting/physics.h"
 
 
 constexpr int screenWidth{640};
@@ -48,7 +51,46 @@ using sdl_window_ptr =
 using gl_context_ptr = std::unique_ptr<void, dukdemo::util::GLContextDeleter>;
 
 
-void run(int argc, char const* const argv[])
+duk_ret_t jsFunc(duk_context* pContext)
+{
+	duk_push_int(pContext, 123);
+	return 1;
+}
+
+
+void addBody(duk_context* pContext)
+{
+	// Stack: [bodyDef].
+	assert(duk_get_top(pContext) == 1 && "Invalid args");
+
+	b2BodyDef def;
+}
+
+
+void runScripts()
+{
+	// Create Duktape heap and context.
+	duk_context_ptr pContext{duk_create_heap_default()};
+	if (!pContext)
+	{
+		throw std::runtime_error{"Failed to create duktype context"};
+	}
+
+	constexpr const char* const pJSON = R"JSON({
+		"type": 1,
+		"position": [1, 2],
+		"angularVelocity": 1.2345,
+		"bullet": true
+	})JSON";
+	duk_push_string(pContext.get(), pJSON);
+	duk_json_decode(pContext.get(), -1);
+
+	b2BodyDef bodyDef;
+	dukdemo::scripting::setBodyDef(pContext.get(), -1, &bodyDef);
+}
+
+
+void runSimulation()
 {
 	dukdemo::render::Context renderContext{"Dukdemo"};
 	dukdemo::render::checkGLErrors("Render context created");
@@ -134,7 +176,6 @@ void run(int argc, char const* const argv[])
 		pMvpMatStart
 	] {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		glUniformMatrix4fv(mvpAttribLoc, 1, GL_FALSE, pMvpMatStart);
 		debugDraw.Render();
 	};
@@ -189,14 +230,19 @@ void run(int argc, char const* const argv[])
 
 int main(int argc, char const* const argv[])
 {
+#ifdef NDEBUG
 	try
 	{
-		run(argc, argv);
+		runSimulation();
 	}
 	catch (std::exception const& err)
 	{
 		LOG(ERROR) << err.what();
 		return 1;
 	}
+#else
+	// Run without intercepting exceptions so we get a stack trace.
+	runSimulation();
+#endif
 	return 0;
 }

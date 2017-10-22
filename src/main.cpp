@@ -76,17 +76,31 @@ void runScripts()
 		throw std::runtime_error{"Failed to create duktype context"};
 	}
 
-	constexpr const char* const pJSON = R"JSON({
+	duk_push_string(pContext.get(), R"JSON({
 		"type": 1,
 		"position": [1, 2],
 		"angularVelocity": 1.2345,
 		"bullet": true
-	})JSON";
-	duk_push_string(pContext.get(), pJSON);
+	})JSON");
 	duk_json_decode(pContext.get(), -1);
 
 	b2BodyDef bodyDef;
-	dukdemo::scripting::setBodyDef(pContext.get(), -1, &bodyDef);
+	dukdemo::scripting::loadBodyDef(
+		pContext.get(), duk_normalize_index(pContext.get(), -1), &bodyDef);
+
+	duk_push_string(pContext.get(), R"JSON({
+		"friction": 1,
+		"restitution": 0.03,
+		"density": 4,
+		"isSensor": true,
+		"categoryBits": 2,
+		"maskBits": 7,
+		"groupIndex": 1
+	})JSON");
+	duk_json_decode(pContext.get(), -1);
+	b2FixtureDef fixtureDef;
+	dukdemo::scripting::loadFixtureDefWithoutShape(
+		pContext.get(), duk_normalize_index(pContext.get(), -1), &fixtureDef);
 }
 
 

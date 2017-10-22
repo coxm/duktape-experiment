@@ -233,7 +233,7 @@ int main(int argc, char const* const argv[])
 #ifdef NDEBUG
 	try
 	{
-		runSimulation();
+		runScripts();
 	}
 	catch (std::exception const& err)
 	{
@@ -242,7 +242,7 @@ int main(int argc, char const* const argv[])
 	}
 #else
 	// Run without intercepting exceptions so we get a stack trace.
-	runSimulation();
+	runScripts();
 #endif
 	return 0;
 }

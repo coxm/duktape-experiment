@@ -28,4 +28,3 @@ set_target_properties(
 	LINKER_LANGAUGE "C"
 )
 target_include_directories(${DUKTAPE_LIBRARY} PUBLIC ${DUKTAPE_INCLUDE_DIRS})
-target_compile_options(${DUKTAPE_LIBRARY} PUBLIC ${CMAKE_C_FLAGS})

@@ -11,13 +11,14 @@ project (${PROJECT_NAME} LANGUAGES CXX C VERSION 1.0.0)
 # Compiler flags.
 list(APPEND MAIN_CXX_FLAGS
 	-Werror -std=c++1z -Wall -Wold-style-cast -Woverloaded-virtual
-	-Wno-int-conversions -Wsign-promo -Wno-pmf-conversions
+	-Wsign-promo -Wno-pmf-conversions
 )
 if(CMAKE_COMPILER_IS_GNUCXX)
 	list(APPEND MAIN_CXX_FLAGS -Weffc++)
 endif()
-if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
 	list(APPEND MAIN_CXX_FLAGS -O0 -ggdb3)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -ggdb3")
 endif()
 
 

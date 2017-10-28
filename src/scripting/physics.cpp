@@ -1,4 +1,13 @@
+#include <cmath>
+#include <cstring>
+#include <limits>
+
 #include <Box2D/Common/b2Math.h>
+#include <Box2D/Collision/Shapes/b2Shape.h>
+#include <Box2D/Collision/Shapes/b2CircleShape.h>
+#include <Box2D/Collision/Shapes/b2PolygonShape.h>
+#include <Box2D/Collision/Shapes/b2EdgeShape.h>
+#include <Box2D/Collision/Shapes/b2ChainShape.h>
 #include <Box2D/Dynamics/b2Body.h>
 #include <Box2D/Dynamics/b2Fixture.h>
 
@@ -13,41 +22,59 @@
 		pDef->prop = static_cast<real_type>( \
 			duk_get_ ## duk_type(ctx, -1) \
 		); \
-	}
+	} \
+	duk_pop(pContext);
 
 
 #define LOAD_OPT_VEC2_PROPERTY(ctx, ownerIdx, pDef, prop) \
 	if (duk_get_prop_string(pContext, ownerIdx, #prop)) \
 	{ \
 		loadVec2(pContext, -1, &(pDef->prop)); \
-	}
+	} \
+	duk_pop(pContext);
 
 
 namespace dukdemo {
 namespace scripting {
 
 
-bool loadVec2(duk_context* pContext, duk_idx_t vecIdx, b2Vec2* pVec)
+constexpr char const* const shapeTypeNames[] = {
+	"circle",
+	"edge",
+	"polygon",
+	"chain",
+};
+constexpr duk_uint_t shapeTypeCount = 4u;
+
+
+constexpr char const* const bodyTypeNames[] = {
+	"static",
+	"kinematic",
+	"dynamic",
+};
+constexpr duk_uint_t bodyTypeCount = 3u;
+
+
+bool
+loadVec2(duk_context* pContext, duk_idx_t vecIdx, b2Vec2* pVec) noexcept
 {
 	if (!duk_is_array(pContext, vecIdx))
 	{
 		return false;
 	}
 
-	// Stack: [..., <vecIdx> vec, ...].
 	duk_get_prop_index(pContext, vecIdx, 0);
-	// Stack: [..., <vecIdx> vec, ..., x].
 	auto const x = duk_get_number(pContext, -1);
-	if (isnan(x))
+	duk_pop(pContext);
+	if (std::isnan(x))
 	{
 		return false;
 	}
 
-	// If the index is negative, decrement it to reflect the changed stack.
-	duk_get_prop_index(pContext, vecIdx - (vecIdx < 0), 1);
-	// Stack: [..., <vecIdx> vec, ..., x, y].
+	duk_get_prop_index(pContext, vecIdx, 1);
 	auto const y = duk_get_number(pContext, -1);
-	if (isnan(y))
+	duk_pop(pContext);
+	if (std::isnan(y))
 	{
 		return false;
 	}
@@ -57,57 +84,483 @@ bool loadVec2(duk_context* pContext, duk_idx_t vecIdx, b2Vec2* pVec)
 }
 
 
-bool loadBodyDef(duk_context* pContext, duk_idx_t defIdx, b2BodyDef* pDef)
+bool
+loadOptionalVec2Prop(
+	duk_context* pContext,
+	duk_idx_t ownerIdx,
+	char const* const pPropName,
+	b2Vec2* pResult
+)
 {
-	if (!duk_check_type(pContext, defIdx, DUK_TYPE_OBJECT))
+	bool valid = true;
+	if (duk_get_prop_string(pContext, ownerIdx, pPropName))
 	{
-		return false;
+		valid = loadVec2(pContext, -1, pResult);
 	}
-	LOAD_OPT_PROPERTY(pContext, defIdx, int, pDef, type, b2BodyType)
-	LOAD_OPT_VEC2_PROPERTY(pContext, defIdx, pDef, position)
-	LOAD_OPT_PROPERTY(pContext, defIdx, number, pDef, angle, float)
-	LOAD_OPT_VEC2_PROPERTY(pContext, defIdx, pDef, linearVelocity)
-	LOAD_OPT_PROPERTY(pContext, defIdx, number, pDef, angularVelocity, float)
-	LOAD_OPT_PROPERTY(pContext, defIdx, number, pDef, linearDamping, float)
-	LOAD_OPT_PROPERTY(pContext, defIdx, number, pDef, angularDamping, float)
-	LOAD_OPT_PROPERTY(pContext, defIdx, boolean, pDef, allowSleep, bool)
-	LOAD_OPT_PROPERTY(pContext, defIdx, number, pDef, awake, float)
-	LOAD_OPT_PROPERTY(pContext, defIdx, number, pDef, fixedRotation, float)
-	LOAD_OPT_PROPERTY(pContext, defIdx, number, pDef, bullet, float)
-	LOAD_OPT_PROPERTY(pContext, defIdx, number, pDef, active, float)
-	LOAD_OPT_PROPERTY(pContext, defIdx, number, pDef, gravityScale, float)
-	return true;
+	duk_pop(pContext);
+	return valid;
 }
 
 
-bool loadFilter(duk_context* pContext, duk_idx_t index, b2Filter* pFilter)
+bool
+loadRequiredVec2Prop(
+	duk_context* pContext,
+	duk_idx_t ownerIdx,
+	char const* const pPropName,
+	b2Vec2* pVec
+)
 {
-	if (!duk_check_type(pContext, index, DUK_TYPE_OBJECT))
-	{
-		return false;
-	}
-	LOAD_OPT_PROPERTY(pContext, index, int, pFilter, categoryBits, uint16)
-	LOAD_OPT_PROPERTY(pContext, index, int, pFilter, maskBits, uint16)
-	LOAD_OPT_PROPERTY(pContext, index, int, pFilter, groupIndex, uint16)
-	return true;
+	bool valid =
+		duk_get_prop_string(pContext, ownerIdx, pPropName) &&
+		loadVec2(pContext, -1, pVec);
+	duk_pop(pContext);
+	return valid;
 }
 
 
-bool loadFixtureDefWithoutShape(
+bool
+loadOptionalFloatProp(
+	duk_context* pContext,
+	duk_idx_t ownerIdx,
+	char const* const pPropName,
+	float* pResult
+)
+{
+	bool valid = true;
+	if (duk_get_prop_string(pContext, ownerIdx, pPropName))
+	{
+		auto const value = static_cast<float>(duk_get_number(pContext, -1));
+		valid = !std::isnan(value);
+		if (valid)
+		{
+			*pResult = static_cast<float>(value);
+		}
+	}
+	duk_pop(pContext);
+	return valid;
+}
+
+
+bool
+loadOptionalInt16Prop(
+	duk_context* pContext,
+	duk_idx_t ownerIdx,
+	char const* const pPropName,
+	int16* pResult
+)
+{
+	bool valid = true;
+	if (duk_get_prop_string(pContext, ownerIdx, pPropName))
+	{
+		valid = duk_is_number(pContext, -1);
+		if (valid)
+		{
+			*pResult = static_cast<int16>(duk_get_int(pContext, -1));
+		}
+	}
+	duk_pop(pContext);
+	return valid;
+}
+
+
+bool
+loadOptionalUint16Prop(
+	duk_context* pContext,
+	duk_idx_t ownerIdx,
+	char const* const pPropName,
+	uint16* pResult
+)
+{
+	bool valid = true;
+	if (duk_get_prop_string(pContext, ownerIdx, pPropName))
+	{
+		valid = duk_is_number(pContext, -1);
+		if (valid)
+		{
+			auto const value = duk_get_uint(pContext, -1);
+			valid = value < std::numeric_limits<uint16>::max();
+			if (valid)
+			{
+				*pResult = static_cast<uint16>(value);
+			}
+		}
+	}
+	duk_pop(pContext);
+	return valid;
+}
+
+
+bool
+loadOptionalBoolProp(
+	duk_context* pContext,
+	duk_idx_t ownerIdx,
+	char const* const pPropName,
+	bool* pResult
+)
+{
+	bool valid = true;
+	if (duk_get_prop_string(pContext, ownerIdx, pPropName))
+	{
+		valid = duk_is_boolean(pContext, -1);
+		if (valid)
+		{
+			*pResult = duk_get_boolean(pContext, -1);
+		}
+	}
+	duk_pop(pContext);
+	return valid;
+}
+
+
+duk_uint_t
+lookupName(
+	char const* const pCandidate,
+	char const* const* const pNameTable,
+	duk_uint_t const tableSize
+)
+	noexcept
+{
+	for (duk_uint_t i = 0u; i < tableSize; ++i)
+	{
+		if (std::strcmp(pCandidate, pNameTable[i]) == 0)
+		{
+			return i;
+		}
+	}
+	return tableSize;
+}
+
+
+duk_uint_t
+getEnum(
+	duk_context* pContext,
+	duk_idx_t idx,
+	char const* const* const pNameTable,
+	duk_uint_t tableSize
+)
+	noexcept
+{
+	if (duk_is_number(pContext, idx))
+	{
+		auto const type = duk_get_uint_default(pContext, idx, tableSize);
+		return (0 <= type && type < tableSize) ? type : tableSize;
+	}
+
+	if (duk_is_string(pContext, idx))
+	{
+		char const* const pType = duk_get_string(pContext, idx);
+		return std::min(lookupName(pType, pNameTable, tableSize), tableSize);
+	}
+
+	return bodyTypeCount;
+}
+
+
+bool
+loadBodyDef(duk_context* pContext, duk_idx_t defIdx, b2BodyDef* pDef)
+	noexcept
+{
+	if (!duk_is_object(pContext, defIdx))
+	{
+		return false;
+	}
+
+	b2BodyDef tmp;
+	std::memcpy(&tmp, pDef, sizeof(b2BodyDef));
+
+	if (duk_get_prop_string(pContext, defIdx, "type"))
+	{
+		auto const type = getEnum(pContext, -1, bodyTypeNames, bodyTypeCount);
+		if (type == bodyTypeCount)
+		{
+			duk_pop(pContext);
+			return false;
+		}
+		tmp.type = static_cast<b2BodyType>(type);
+	}
+	duk_pop(pContext);
+
+	if (
+		loadOptionalVec2Prop(pContext, defIdx, "position", &tmp.position) &&
+		loadOptionalVec2Prop(
+			pContext, defIdx, "linearVelocity", &tmp.linearVelocity) &&
+		loadOptionalFloatProp(pContext, defIdx, "angle", &tmp.angle) &&
+		loadOptionalFloatProp(
+			pContext, defIdx, "angularVelocity", &tmp.angularVelocity) &&
+		loadOptionalFloatProp(
+			pContext, defIdx, "linearDamping", &tmp.linearDamping) &&
+		loadOptionalFloatProp(
+			pContext, defIdx, "angularDamping", &tmp.angularDamping) &&
+		loadOptionalBoolProp(
+			pContext, defIdx, "allowSleep", &tmp.allowSleep) &&
+		loadOptionalBoolProp(pContext, defIdx, "awake", &tmp.awake) &&
+		loadOptionalBoolProp(
+			pContext, defIdx, "fixedRotation", &tmp.fixedRotation) &&
+		loadOptionalBoolProp(pContext, defIdx, "bullet", &tmp.bullet) &&
+		loadOptionalBoolProp(pContext, defIdx, "active", &tmp.active) &&
+		loadOptionalFloatProp(
+			pContext, defIdx, "gravityScale", &tmp.gravityScale)
+	)
+	{
+		std::memcpy(pDef, &tmp, sizeof(b2BodyDef));
+		return true;
+	}
+	return false;
+}
+
+
+bool
+loadFilter(duk_context* pContext, duk_idx_t index, b2Filter* pFilter)
+	noexcept
+{
+	if (!duk_is_object(pContext, index))
+	{
+		return false;
+	}
+	b2Filter tmp;
+	std::memcpy(&tmp, pFilter, sizeof(b2Filter));
+
+	if (
+		loadOptionalUint16Prop(
+			pContext, index, "categoryBits", &tmp.categoryBits) &&
+		loadOptionalUint16Prop(pContext, index, "maskBits", &tmp.maskBits) &&
+		loadOptionalInt16Prop(pContext, index, "groupIndex", &tmp.groupIndex)
+	)
+	{
+		std::memcpy(pFilter, &tmp, sizeof(b2Filter));
+		return true;
+	}
+	return false;
+}
+
+
+bool
+loadFixtureDefWithoutShape(
 	duk_context* pContext,
 	duk_idx_t index,
 	b2FixtureDef* pDef
 )
+	noexcept
 {
-	if (!loadFilter(pContext, index, &(pDef->filter))) // Also checks type.
+	if (!duk_is_object(pContext, index))
 	{
 		return false;
 	}
-	LOAD_OPT_PROPERTY(pContext, index, number, pDef, friction, float)
-	LOAD_OPT_PROPERTY(pContext, index, number, pDef, restitution, float)
-	LOAD_OPT_PROPERTY(pContext, index, number, pDef, density, float)
-	LOAD_OPT_PROPERTY(pContext, index, number, pDef, isSensor, float)
+
+	b2FixtureDef tmp;
+	std::memcpy(&tmp, pDef, sizeof(b2FixtureDef));
+	if (
+		loadFilter(pContext, index, &tmp.filter) &&
+		loadOptionalFloatProp(pContext, index, "friction", &tmp.friction) &&
+		loadOptionalFloatProp(
+			pContext, index, "restitution", &tmp.restitution) &&
+		loadOptionalFloatProp(pContext, index, "density", &tmp.density) &&
+		loadOptionalBoolProp(pContext, index, "isSensor", &tmp.isSensor)
+	)
+	{
+		std::memcpy(pDef, &tmp, sizeof(b2FixtureDef));
+		return true;
+	}
+	return false;
+}
+
+
+bool
+loadCircle(
+	duk_context* pContext,
+	duk_idx_t idx,
+	b2CircleShape* pShape
+)
+	noexcept
+{
+	if (!duk_is_object(pContext, idx))
+	{
+		return false;
+	}
+
+	bool valid = (
+		duk_get_prop_string(pContext, idx, "radius") &&
+		duk_get_prop_string(pContext, idx - (idx < 0), "position")
+	);
+
+	if (valid)
+	{
+		float radius = duk_get_number(pContext, -2);
+		valid = !std::isnan(radius) && loadVec2(pContext, -1, &(pShape->m_p));
+		if (valid)
+		{
+			pShape->m_radius = radius;
+		}
+	}
+
+	duk_pop_2(pContext);
+	return valid;
+}
+
+
+bool
+loadPolygon(
+	duk_context* pContext,
+	duk_idx_t polygonIdx,
+	b2PolygonShape* pShape
+)
+	noexcept
+{
+	if (!duk_is_object(pContext, polygonIdx))
+	{
+		return false;
+	}
+
+	bool valid = (
+		duk_get_prop_string(pContext, polygonIdx, "vertices") &&
+		duk_is_array(pContext, -1)
+	);
+	if (valid)
+	{
+		b2Vec2 vertices[b2_maxPolygonVertices];
+		duk_size_t const len = duk_get_length(pContext, -1);
+		valid = len < b2_maxPolygonVertices;
+		for (duk_size_t i = 0ul; valid && i < len; ++i)
+		{
+			duk_get_prop_index(pContext, -1, i);
+			valid = loadVec2(pContext, -1, &(vertices[i]));
+			duk_pop(pContext);
+		}
+		pShape->Set(vertices, len);
+	}
+	duk_pop(pContext);  // Pop `vertices`.
+	return valid;
+}
+
+
+bool
+loadEdge(
+	duk_context* pContext,
+	duk_idx_t idx,
+	b2EdgeShape* pShape
+)
+	noexcept
+{
+	if (!duk_is_object(pContext, idx))
+	{
+		return false;
+	}
+
+	b2EdgeShape tmp;
+	std::memcpy(&tmp, pShape, sizeof(b2EdgeShape));
+
+	// Load the edge vectors, returning false on failure.
+	if (!(
+		loadRequiredVec2Prop(pContext, idx, "v1", &tmp.m_vertex1) &&
+		loadRequiredVec2Prop(pContext, idx, "v2", &tmp.m_vertex2)
+	))
+	{
+		return false;
+	}
+
+	// Load the 'prev' ghost vertex, if any.
+	if (duk_get_prop_string(pContext, idx, "prev"))
+	{
+		if (!loadVec2(pContext, -1, &tmp.m_vertex0))
+		{
+			return false;
+		}
+		tmp.m_hasVertex0 = true;
+	}
+
+	// Load the 'next' ghost vertex, if any.
+	if (duk_get_prop_string(pContext, idx, "next"))
+	{
+		if (!loadVec2(pContext, -1, &tmp.m_vertex0))
+		{
+			return false;
+		}
+		tmp.m_hasVertex3 = true;
+	}
+
+	std::memcpy(pShape, &tmp, sizeof(b2EdgeShape));
 	return true;
+}
+
+
+bool
+loadChain(duk_context* pContext, duk_idx_t idx, b2ChainShape* pShape)
+{
+	// Get vertices property.
+	bool const hasVerticesArray = (
+		duk_get_prop_string(pContext, idx, "vertices") &&
+		duk_is_array(pContext, -1)
+	);
+	duk_pop(pContext); // Pop `vertices`.
+	if (!hasVerticesArray)
+	{
+		return false;
+	}
+
+	// Copy vertices to a contigious buffer.
+	auto const len = duk_get_length(pContext, -1);
+	auto pVertices = std::make_unique<b2Vec2[]>(len);
+	bool valid = true;
+	for (duk_uarridx_t i = 0; i < len; ++i)
+	{
+		duk_get_prop_index(pContext, idx, i);
+		valid = loadVec2(pContext, -1, &pVertices[i]);
+		duk_pop(pContext);
+		if (!valid)
+		{
+			break;
+		}
+	}
+	duk_pop(pContext); // Pop `vertices`.
+	if (!valid)
+	{
+		return false;
+	}
+
+	// Check if a loop.
+	bool const isLoop = (
+		duk_get_prop_string(pContext, idx, "loop") &&
+		duk_get_boolean(pContext, -1)
+	);
+	duk_pop(pContext); // Pop `loop`.
+	if (isLoop)
+	{
+		pShape->CreateLoop(pVertices.get(), len);
+		return true;
+	}
+
+	// Load previous vertex.
+	b2Vec2 prev;
+	auto const hasPrev = duk_get_prop_string(pContext, -1, "prev");
+	if (hasPrev)
+	{
+		valid = loadVec2(pContext, -1, &prev);
+	}
+	duk_pop(pContext);
+
+	// Load next vertex.
+	auto const hasNext = duk_get_prop_string(pContext, -1, "next");
+	b2Vec2 next;
+	if (hasNext)
+	{
+		valid &= loadVec2(pContext, -1, &next);
+	}
+	duk_pop(pContext);
+
+	if (valid)
+	{
+		pShape->CreateChain(pVertices.get(), len);
+		if (hasPrev)
+		{
+			pShape->SetPrevVertex(prev);
+		}
+		if (hasNext)
+		{
+			pShape->SetNextVertex(next);
+		}
+	}
+
+	return valid;
 }
 
 

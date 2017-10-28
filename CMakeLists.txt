@@ -79,3 +79,9 @@ target_compile_options(${PROJECT_LIB} PUBLIC ${MAIN_CXX_FLAGS})
 add_executable(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/src/main.cpp")
 target_link_libraries(${PROJECT_NAME} ${ALL_LIBS})
 target_compile_options("${PROJECT_NAME}" PUBLIC ${MAIN_CXX_FLAGS})
+
+
+if(BUILD_TESTS)
+	enable_testing()
+	add_subdirectory(test)
+endif()

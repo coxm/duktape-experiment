@@ -48,11 +48,12 @@ testOptionGetter(
 	ResultLoader<Result> loadResultFromJS,
 	ResultCreator<Result> createInitialResult,
 	ResultChecker<Result> checkResultUnchanged,
-	ResultChecker<Result> checkChangedResultIsValid
+	ResultChecker<Result> checkChangedResultIsCorrect
 )
 {
 	testutils::duk_context_ptr pContext{duk_create_heap_default()};
-	auto const ownerIdx = prepContextForOptionLoad(pContext.get());
+	auto const ownerIdx = duk_normalize_index(
+		pContext.get(), prepContextForOptionLoad(pContext.get()));
 
 	auto const arrayIdx = duk_push_array(pContext.get());
 	duk_put_prop_index(pContext.get(), -1, 0);
@@ -98,7 +99,7 @@ testOptionGetter(
 
 		THEN("the result is correct")
 		{
-			checkChangedResultIsValid(result);
+			checkChangedResultIsCorrect(result);
 		}
 	}
 }
@@ -112,7 +113,6 @@ namespace b2Vec2_test {
 
 	void insertValidJSValue(duk_context* pCtx, duk_idx_t ownerIdx)
 	{
-		ownerIdx = duk_normalize_index(pCtx, ownerIdx);
 		auto const arrayIdx = duk_push_array(pCtx);
 		duk_push_number(pCtx, newX);
 		duk_put_prop_index(pCtx, arrayIdx, 0);
@@ -132,7 +132,7 @@ namespace b2Vec2_test {
 		CHECK(result.y == Approx(originalY));
 	}
 
-	void checkChangedResultIsValid(b2Vec2 result)
+	void checkChangedResultIsCorrect(b2Vec2 result)
 	{
 		CHECK(result.x == Approx(newX));
 		CHECK(result.y == Approx(newY));
@@ -149,7 +149,49 @@ SCENARIO("Loading optional b2Vec2 props", "[loadOptionalVec2Prop]")
 			ds::loadOptionalVec2Prop,
 			b2Vec2_test::createInitialResult,
 			b2Vec2_test::checkResultUnchanged,
-			b2Vec2_test::checkChangedResultIsValid
+			b2Vec2_test::checkChangedResultIsCorrect
+		);
+	}
+}
+
+
+namespace float_test {
+	constexpr float originalValue = 4.5f;
+	constexpr float newValue = 6.7f;
+
+	void insertValidJSValue(duk_context* pCtx, duk_idx_t ownerIdx)
+	{
+		duk_push_number(pCtx, newValue);
+		duk_put_prop_string(pCtx, ownerIdx, pPropName);
+	}
+
+	float createInitialResult()
+	{
+		return originalValue;
+	}
+
+	void checkResultUnchanged(float result)
+	{
+		CHECK(result == Approx(originalValue));
+	}
+
+	void checkChangedResultIsCorrect(float result)
+	{
+		CHECK(result == Approx(newValue));
+	}
+} // namespace f
+
+
+SCENARIO("Loading optional float props", "[loadOptionalFloatProp]")
+{
+	GIVEN("a duktape context")
+	{
+		testOptionGetter<float>(
+			float_test::insertValidJSValue,
+			ds::loadOptionalFloatProp,
+			float_test::createInitialResult,
+			float_test::checkResultUnchanged,
+			float_test::checkChangedResultIsCorrect
 		);
 	}
 }

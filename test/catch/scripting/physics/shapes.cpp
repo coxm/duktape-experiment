@@ -220,17 +220,32 @@ SCENARIO("Loading a b2PolygonShape from JS", "[loadPolygon]")
 				[-1,  1]
 			]
 		})JSON";
-		constexpr char const* const pPartialValidJSON = "{}";
 		constexpr char const* const pInvalidJSON = "{\"vertices\": [[1]]}";
 
 		testObjectLoader<b2PolygonShape>(
 			ds::loadPolygon,
 			pInvalidJSON,
 			pFullValidJSON,
-			pPartialValidJSON,
+			nullptr,
 			checkPolygonShapeFullyLoaded,
-			checkPolygonShapePartiallyLoaded,
+			nullptr, // Partially loaded check.
 			checkPolygonsEqual
 		);
+	}
+
+	GIVEN("incomplete data")
+	{
+		WHEN("the vertices property is missing")
+		{
+			THEN("the operation fails")
+			{
+				testutils::duk_context_ptr pContext{duk_create_heap_default()};
+				b2PolygonShape polygon;
+				testutils::pushJSONObject(pContext.get(), "{}");
+				bool const success = ds::loadPolygon(
+					pContext.get(), -1, &polygon);
+				REQUIRE(success == false);
+			}
+		}
 	}
 }

@@ -406,8 +406,8 @@ loadPolygon(
 		return false;
 	}
 
-	bool valid = true;
-	if (duk_get_prop_string(pContext, polygonIdx, "vertices"))
+	bool valid = duk_get_prop_string(pContext, polygonIdx, "vertices");
+	if (valid)
 	{
 		valid = duk_is_array(pContext, -1);
 

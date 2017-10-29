@@ -279,6 +279,8 @@ loadCircle(
 /**
  * Load a polygon shape.
  *
+ * @note Required properties are: `vertices`.
+ *
  * @param pContext the duktape context.
  * @param idx the value stack index of the shape JS object.
  * @returns false iff the JS object is invalid.

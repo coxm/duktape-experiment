@@ -82,14 +82,14 @@ testObjectLoader(
 			Result defaultInitialised;
 			checkEqual(result, defaultInitialised);
 		}
+	}
 
-		THEN("partial definitions are accepted")
-		{
-			testutils::pushJSONObject(pContext.get(), pValidPartialJSON);
-			bool const valid = loadObject(pContext.get(), -1, &result);
-			REQUIRE(valid);
-			checkPartiallyLoadedObject(result);
-		}
+	THEN("partial definitions are accepted")
+	{
+		testutils::pushJSONObject(pContext.get(), pValidPartialJSON);
+		bool const valid = loadObject(pContext.get(), -1, &result);
+		REQUIRE(valid);
+		checkPartiallyLoadedObject(result);
 	}
 }
 

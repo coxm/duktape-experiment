@@ -453,8 +453,7 @@ loadEdge(
 		return false;
 	}
 
-	b2EdgeShape tmp;
-	std::memcpy(&tmp, pShape, sizeof(b2EdgeShape));
+	b2EdgeShape tmp{*pShape};
 
 	// Load the edge vectors, returning false on failure.
 	if (!(
@@ -485,7 +484,7 @@ loadEdge(
 		tmp.m_hasVertex3 = true;
 	}
 
-	std::memcpy(pShape, &tmp, sizeof(b2EdgeShape));
+	*pShape = tmp;
 	return true;
 }
 

@@ -262,6 +262,8 @@ getShapeType(duk_context* pContext, duk_idx_t shapeIdx) noexcept;
 /**
  * Load a circle shape.
  *
+ * @note Required properties are: `radius`, `position`.
+ *
  * @param pContext the duktape context.
  * @param idx the value stack index of the shape JS object.
  * @returns false iff the JS object is invalid.

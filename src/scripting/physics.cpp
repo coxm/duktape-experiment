@@ -380,23 +380,16 @@ loadCircle(
 		return false;
 	}
 
-	float radius = pShape->m_radius;
-	bool valid = true;
-	if (duk_get_prop_string(pContext, idx, "radius"))
-	{
-		radius = static_cast<float>(duk_get_number(pContext, -1));
-		valid = !std::isnan(radius);
-	}
-	duk_pop(pContext);
-
-	b2Vec2 vec{pShape->m_p};
-	valid &= loadOptionalVec2Prop(pContext, -1, "position", &vec);
-	if (valid)
+	float radius = 0.0f;
+	if (
+		loadRequiredFloatProp(pContext, idx, "radius", &radius) &&
+		loadRequiredVec2Prop(pContext, idx, "position", &(pShape->m_p))
+	)
 	{
 		pShape->m_radius = radius;
-		pShape->m_p = vec;
+		return true;
 	}
-	return valid;
+	return false;
 }
 
 

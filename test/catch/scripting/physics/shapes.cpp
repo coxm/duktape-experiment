@@ -334,3 +334,94 @@ SCENARIO("Loading a b2EdgeShape from JS", "[loadEdge]")
 		);
 	}
 }
+
+
+void initChainShape(b2ChainShape* pChain)
+{
+	pChain->m_vertices = nullptr;
+	pChain->m_count = 0;
+	pChain->m_prevVertex.Set(0.0f, 0.0f);
+	pChain->m_nextVertex.Set(0.0f, 0.0f);
+	pChain->m_hasPrevVertex = false;
+	pChain->m_hasNextVertex = false;
+}
+
+
+void checkChainShapeFullyLoaded(b2ChainShape const& chain)
+{
+	CHECK(chain.m_vertices[0].x == Approx(0.0f));
+	CHECK(chain.m_vertices[0].y == Approx(0.0f));
+	CHECK(chain.m_vertices[1].x == Approx(1.0f));
+	CHECK(chain.m_vertices[1].y == Approx(1.0f));
+	CHECK(chain.m_vertices[2].x == Approx(2.0f));
+	CHECK(chain.m_vertices[2].y == Approx(2.0f));
+
+	CHECK(chain.m_hasPrevVertex);
+	CHECK(chain.m_hasNextVertex);
+
+	CHECK(chain.m_prevVertex.x == Approx(-1.0f));
+	CHECK(chain.m_prevVertex.y == Approx(-1.0f));
+	CHECK(chain.m_nextVertex.x == Approx(3.0f));
+	CHECK(chain.m_nextVertex.y == Approx(3.0f));
+}
+
+
+void checkChainShapePartiallyLoaded(b2ChainShape const& chain)
+{
+	CHECK(chain.m_vertices[0].x == Approx(0.0f));
+	CHECK(chain.m_vertices[0].y == Approx(0.0f));
+	CHECK(chain.m_vertices[1].x == Approx(1.0f));
+	CHECK(chain.m_vertices[1].y == Approx(1.0f));
+	CHECK(chain.m_vertices[2].x == Approx(2.0f));
+	CHECK(chain.m_vertices[2].y == Approx(2.0f));
+}
+
+
+void checkChainUnmodified(b2ChainShape const& chain)
+{
+	CHECK(chain.m_vertices == nullptr);
+
+	CHECK(!chain.m_hasPrevVertex);
+	CHECK(!chain.m_hasNextVertex);
+
+	CHECK(chain.m_prevVertex.x == Approx(0.0f));
+	CHECK(chain.m_prevVertex.y == Approx(0.0f));
+	CHECK(chain.m_nextVertex.x == Approx(0.0f));
+	CHECK(chain.m_nextVertex.y == Approx(0.0f));
+}
+
+
+SCENARIO("Loading a b2ChainShape from JS", "[loadChain]")
+{
+	GIVEN("a duktape context")
+	{
+		constexpr char const* const pFullValidJSON = R"JSON({
+			"vertices": [
+				[0, 0],
+				[1, 1],
+				[2, 2]
+			],
+			"prev": [-1, -1],
+			"next": [3, 3]
+		})JSON";
+		constexpr char const* const pPartialValidJSON = R"JSON({
+			"vertices": [
+				[0, 0],
+				[1, 1],
+				[2, 2]
+			]
+		})JSON";
+		constexpr char const* const pInvalidJSON = "{\"vertices\": null}";
+
+		testObjectLoader<b2ChainShape>(
+			initChainShape,
+			ds::loadChain,
+			pInvalidJSON,
+			pFullValidJSON,
+			pPartialValidJSON,
+			checkChainShapeFullyLoaded,
+			checkChainShapePartiallyLoaded,
+			checkChainUnmodified
+		);
+	}
+}

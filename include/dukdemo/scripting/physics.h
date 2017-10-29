@@ -314,6 +314,9 @@ loadEdge(
 /**
  * Load a chain shape.
  *
+ * @note Required properties are: `vertices`.
+ * @note Optional properties are: `loop` (default false), `prev`, `next`.
+ *
  * @param pContext the duktape context.
  * @param idx the value stack index of the shape JS object.
  * @returns false iff the JS object is invalid.

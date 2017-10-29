@@ -394,6 +394,28 @@ loadCircle(
 
 
 bool
+loadVertexArray(
+	duk_context* pContext,
+	duk_idx_t arrayIdx,
+	b2Vec2* pVertices,
+	duk_idx_t count
+)
+{
+	for (duk_idx_t i = 0ul; i < count; ++i)
+	{
+		duk_get_prop_index(pContext, arrayIdx, i);
+		bool valid = loadVec2(pContext, arrayIdx, pVertices + i);
+		duk_pop(pContext);
+		if (!valid)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+
+bool
 loadPolygon(
 	duk_context* pContext,
 	duk_idx_t polygonIdx,
@@ -415,13 +437,9 @@ loadPolygon(
 		{
 			b2Vec2 vertices[b2_maxPolygonVertices];
 			duk_size_t const len = duk_get_length(pContext, -1);
-			valid = len < b2_maxPolygonVertices;
-			for (duk_size_t i = 0ul; valid && i < len; ++i)
-			{
-				duk_get_prop_index(pContext, -1, i);
-				valid = loadVec2(pContext, -1, &(vertices[i]));
-				duk_pop(pContext);
-			}
+			valid = (0 < len && len < b2_maxPolygonVertices);
+
+			valid &= loadVertexArray(pContext, polygonIdx, &vertices[0], len);
 			if (valid)
 			{
 				pShape->Set(vertices, len);
@@ -467,28 +485,20 @@ bool
 loadChain(duk_context* pContext, duk_idx_t idx, b2ChainShape* pShape)
 {
 	// Get vertices property.
-	bool const hasVerticesArray = (
+	bool valid =
 		duk_get_prop_string(pContext, idx, "vertices") &&
-		duk_is_array(pContext, -1)
-	);
-	duk_pop(pContext); // Pop `vertices`.
-	if (!hasVerticesArray)
-	{
-		return false;
-	}
+		duk_is_array(pContext, -1);
 
-	// Copy vertices to a contigious buffer.
-	auto const len = duk_get_length(pContext, -1);
-	auto pVertices = std::make_unique<b2Vec2[]>(len);
-	bool valid = true;
-	for (duk_uarridx_t i = 0; i < len; ++i)
+	std::unique_ptr<b2Vec2[]> pVertices;
+	duk_size_t len = 0ul;
+	if (valid)
 	{
-		duk_get_prop_index(pContext, idx, i);
-		valid = loadVec2(pContext, -1, &pVertices[i]);
-		duk_pop(pContext);
-		if (!valid)
+		len = duk_get_length(pContext, -1);
+		valid = (len > 0);
+		if (valid)
 		{
-			break;
+			pVertices = std::make_unique<b2Vec2[]>(len);
+			valid = loadVertexArray(pContext, -1, &pVertices[0], len);
 		}
 	}
 	duk_pop(pContext); // Pop `vertices`.
@@ -498,10 +508,9 @@ loadChain(duk_context* pContext, duk_idx_t idx, b2ChainShape* pShape)
 	}
 
 	// Check if a loop.
-	bool const isLoop = (
+	bool const isLoop =
 		duk_get_prop_string(pContext, idx, "loop") &&
-		duk_get_boolean(pContext, -1)
-	);
+		duk_get_boolean(pContext, -1);
 	duk_pop(pContext); // Pop `loop`.
 	if (isLoop)
 	{

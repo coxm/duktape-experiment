@@ -12,4 +12,12 @@ using duk_context_ptr =
 	std::unique_ptr<duk_context, dukdemo::util::DukContextDeleter>;
 
 
+inline void
+pushJSONObject(duk_context* pContext, char const* const pJSON)
+{
+	duk_push_string(pContext, pJSON);
+	duk_json_decode(pContext, -1);
+}
+
+
 } // namespace testutils

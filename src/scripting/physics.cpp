@@ -449,36 +449,17 @@ loadEdge(
 	b2EdgeShape tmp{*pShape};
 
 	// Load the edge vectors, returning false on failure.
-	if (!(
+	if (
 		loadRequiredVec2Prop(pContext, idx, "v1", &tmp.m_vertex1) &&
-		loadRequiredVec2Prop(pContext, idx, "v2", &tmp.m_vertex2)
-	))
+		loadRequiredVec2Prop(pContext, idx, "v2", &tmp.m_vertex2) &&
+		loadOptionalVec2Prop(pContext, idx, "prev", &tmp.m_vertex0) &&
+		loadOptionalVec2Prop(pContext, idx, "next", &tmp.m_vertex3)
+	)
 	{
-		return false;
+		*pShape = tmp;
+		return true;
 	}
-
-	// Load the 'prev' ghost vertex, if any.
-	if (duk_get_prop_string(pContext, idx, "prev"))
-	{
-		if (!loadVec2(pContext, -1, &tmp.m_vertex0))
-		{
-			return false;
-		}
-		tmp.m_hasVertex0 = true;
-	}
-
-	// Load the 'next' ghost vertex, if any.
-	if (duk_get_prop_string(pContext, idx, "next"))
-	{
-		if (!loadVec2(pContext, -1, &tmp.m_vertex0))
-		{
-			return false;
-		}
-		tmp.m_hasVertex3 = true;
-	}
-
-	*pShape = tmp;
-	return true;
+	return false;
 }
 
 

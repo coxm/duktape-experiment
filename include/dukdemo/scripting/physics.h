@@ -296,6 +296,9 @@ loadPolygon(
 /**
  * Load an edge shape.
  *
+ * @note Required properties are: `v1`, `v2`.
+ * @note Optional properties are: `prev`, `next` (ghost vertices).
+ *
  * @param pContext the duktape context.
  * @param idx the value stack index of the shape JS object.
  * @returns false iff the JS object is invalid.

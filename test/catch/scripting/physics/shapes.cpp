@@ -18,6 +18,10 @@ namespace ds = dukdemo::scripting;
 
 
 template <typename Result>
+using ObjectInitialiser = void(Result*);
+
+
+template <typename Result>
 using ObjectLoader = bool(duk_context*, duk_idx_t, Result*);
 
 
@@ -26,19 +30,16 @@ using ObjectChecker = void(Result const&);
 
 
 template <typename Result>
-using EqualityChecker = void(Result const&, Result const&);
-
-
-template <typename Result>
 void
 testObjectLoader(
+	ObjectInitialiser<Result> initObject,
 	ObjectLoader<Result> loadObject,
 	char const* const pInvalidJSON,
 	char const* const pValidFullJSON,
 	char const* const pValidPartialJSON,
 	ObjectChecker<Result> checkFullyLoadedObject,
 	ObjectChecker<Result> checkPartiallyLoadedObject,
-	EqualityChecker<Result> checkEqual
+	ObjectChecker<Result> checkUnmodified
 )
 {
 	testutils::duk_context_ptr pContext{duk_create_heap_default()};
@@ -46,6 +47,7 @@ testObjectLoader(
 	duk_push_string(pContext.get(), "dummy test data");
 
 	Result result;
+	initObject(&result);
 
 	WHEN("loading from a full object")
 	{
@@ -79,8 +81,7 @@ testObjectLoader(
 			testutils::pushJSONObject(pContext.get(), pInvalidJSON);
 			bool const valid = loadObject(pContext.get(), -1, &result);
 			REQUIRE(!valid);
-			Result defaultInitialised;
-			checkEqual(result, defaultInitialised);
+			checkUnmodified(result);
 		}
 	}
 
@@ -99,6 +100,13 @@ testObjectLoader(
 }
 
 
+inline void initCircleShape(b2CircleShape* pCircle)
+{
+	pCircle->m_radius = 0.0f;
+	pCircle->m_p.Set(0.0f, 0.0f);
+}
+
+
 inline void checkCircleShapeFullyLoaded(b2CircleShape const& shape)
 {
 	CHECK(shape.m_radius == Approx(5.4321f));
@@ -107,11 +115,11 @@ inline void checkCircleShapeFullyLoaded(b2CircleShape const& shape)
 }
 
 
-void checkCirclesEqual(b2CircleShape const& a, b2CircleShape const& b)
+void checkCircleUnmodified(b2CircleShape const& circle)
 {
-	CHECK(a.m_p.x == b.m_p.x);
-	CHECK(a.m_p.y == b.m_p.y);
-	CHECK(a.m_radius == Approx(b.m_radius));
+	CHECK(circle.m_p.x == Approx(0.0f));
+	CHECK(circle.m_p.y == Approx(0.0f));
+	CHECK(circle.m_radius == Approx(0.0f));
 }
 
 
@@ -128,13 +136,14 @@ SCENARIO("Loading a b2CircleShape from JS", "[loadCircle]")
 		})JSON";
 
 		testObjectLoader<b2CircleShape>(
+			initCircleShape,
 			ds::loadCircle,
 			pInvalidJSON,
 			pFullValidJSON,
 			nullptr, // Partial valid JSON.
 			checkCircleShapeFullyLoaded,
 			nullptr,
-			checkCirclesEqual
+			checkCircleUnmodified
 		);
 	}
 
@@ -162,6 +171,12 @@ constexpr std::pair<float, float> vertices[numVertices] = {
 };
 
 
+inline void initPolygonShape(b2PolygonShape* pShape)
+{
+	pShape->m_count = 0;
+}
+
+
 inline void checkPolygonShapeFullyLoaded(b2PolygonShape const& shape)
 {
 	REQUIRE(shape.m_count == numVertices);
@@ -176,7 +191,7 @@ inline void checkPolygonShapeFullyLoaded(b2PolygonShape const& shape)
 			shape.m_vertices[offset].y == vertices[0].second
 		)
 		{
-			return;
+			break;
 		}
 	}
 
@@ -197,14 +212,9 @@ inline void checkPolygonShapePartiallyLoaded(b2PolygonShape const& shape)
 }
 
 
-void checkPolygonsEqual(b2PolygonShape const& a, b2PolygonShape const& b)
+void checkPolygonUnmodified(b2PolygonShape const& shape)
 {
-	REQUIRE(a.m_count == b.m_count);
-	for (int32 i = 0; i < a.m_count; ++i)
-	{
-		CHECK(a.m_vertices[i].x == b.m_vertices[i].x);
-		CHECK(a.m_vertices[i].y == b.m_vertices[i].y);
-	}
+	REQUIRE(shape.m_count == 0);
 }
 
 
@@ -223,13 +233,14 @@ SCENARIO("Loading a b2PolygonShape from JS", "[loadPolygon]")
 		constexpr char const* const pInvalidJSON = "{\"vertices\": [[1]]}";
 
 		testObjectLoader<b2PolygonShape>(
+			initPolygonShape,
 			ds::loadPolygon,
 			pInvalidJSON,
 			pFullValidJSON,
 			nullptr,
 			checkPolygonShapeFullyLoaded,
 			nullptr, // Partially loaded check.
-			checkPolygonsEqual
+			checkPolygonUnmodified
 		);
 	}
 
@@ -247,5 +258,79 @@ SCENARIO("Loading a b2PolygonShape from JS", "[loadPolygon]")
 				REQUIRE(success == false);
 			}
 		}
+	}
+}
+
+
+void initEdgeShape(b2EdgeShape* pEdge)
+{
+	pEdge->m_vertex0.Set(0.0f, 0.0f);
+	pEdge->m_vertex1.Set(0.0f, 0.0f);
+	pEdge->m_vertex2.Set(0.0f, 0.0f);
+	pEdge->m_vertex3.Set(0.0f, 0.0f);
+}
+
+
+void checkEdgeShapeFullyLoaded(b2EdgeShape const& edge)
+{
+	CHECK(edge.m_vertex0.x == Approx(-2.0f));
+	CHECK(edge.m_vertex0.y == Approx(-2.0f));
+	CHECK(edge.m_vertex1.x == Approx(-1.0f));
+	CHECK(edge.m_vertex1.y == Approx(-1.0f));
+	CHECK(edge.m_vertex2.x == Approx( 1.0f));
+	CHECK(edge.m_vertex2.y == Approx( 1.0f));
+	CHECK(edge.m_vertex3.x == Approx( 2.0f));
+	CHECK(edge.m_vertex3.y == Approx( 2.0f));
+}
+
+
+void checkEdgeShapePartiallyLoaded(b2EdgeShape const& edge)
+{
+	CHECK(edge.m_vertex1.x == Approx(-1.0f));
+	CHECK(edge.m_vertex1.y == Approx(-1.0f));
+	CHECK(edge.m_vertex2.x == Approx( 1.0f));
+	CHECK(edge.m_vertex2.y == Approx( 1.0f));
+}
+
+
+void checkEdgeUnmodified(b2EdgeShape const& shape)
+{
+	CHECK(shape.m_vertex0.x == Approx(0.0f));
+	CHECK(shape.m_vertex0.y == Approx(0.0f));
+	CHECK(shape.m_vertex1.x == Approx(0.0f));
+	CHECK(shape.m_vertex1.y == Approx(0.0f));
+	CHECK(shape.m_vertex2.x == Approx(0.0f));
+	CHECK(shape.m_vertex2.y == Approx(0.0f));
+	CHECK(shape.m_vertex3.x == Approx(0.0f));
+	CHECK(shape.m_vertex3.y == Approx(0.0f));
+}
+
+
+SCENARIO("Loading a b2EdgeShape from JS", "[loadEdge]")
+{
+	GIVEN("a duktape context")
+	{
+		constexpr char const* const pFullValidJSON = R"JSON({
+			"prev": [-2, -2],
+			"v1": [-1, -1],
+			"v2": [1, 1],
+			"next": [2, 2]
+		})JSON";
+		constexpr char const* const pPartialValidJSON = R"JSON({
+			"v1": [-1, -1],
+			"v2": [1, 1]
+		})JSON";
+		constexpr char const* const pInvalidJSON = "{\"v1\": \"no vertex\"}";
+
+		testObjectLoader<b2EdgeShape>(
+			initEdgeShape,
+			ds::loadEdge,
+			pInvalidJSON,
+			pFullValidJSON,
+			pPartialValidJSON,
+			checkEdgeShapeFullyLoaded,
+			checkEdgeShapePartiallyLoaded,
+			checkEdgeUnmodified
+		);
 	}
 }

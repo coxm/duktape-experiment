@@ -142,3 +142,86 @@ SCENARIO("Loading a b2CircleShape from JS", "[loadCircle]")
 		);
 	}
 }
+
+
+constexpr std::size_t numVertices = 4ul;
+constexpr std::pair<float, float> vertices[numVertices] = {
+	{-1.0f, -1.0f},
+	{ 1.0f, -1.0f},
+	{ 1.0f,  1.0f},
+	{-1.0f,  1.0f},
+};
+
+
+inline void checkPolygonShapeFullyLoaded(b2PolygonShape const& shape)
+{
+	REQUIRE(shape.m_count == numVertices);
+
+	// Box2D's b2PolygonShape::Set is allowed to re-order vertices, so we must
+	// calculate an offset to the first of our vertices.
+	unsigned offset = 0u;
+	for (; offset < numVertices; ++offset)
+	{
+		if (
+			shape.m_vertices[offset].x == vertices[0].first &&
+			shape.m_vertices[offset].y == vertices[0].second
+		)
+		{
+			return;
+		}
+	}
+
+	REQUIRE(offset < numVertices);
+
+	for (unsigned i = 0u; i < numVertices; ++i)
+	{
+		unsigned j = (i + offset) % numVertices;
+		CHECK(shape.m_vertices[j].x == Approx(vertices[i].first));
+		CHECK(shape.m_vertices[j].y == Approx(vertices[i].second));
+	}
+}
+
+
+inline void checkPolygonShapePartiallyLoaded(b2PolygonShape const& shape)
+{
+	REQUIRE(shape.m_count == 0);
+}
+
+
+void checkPolygonsEqual(b2PolygonShape const& a, b2PolygonShape const& b)
+{
+	REQUIRE(a.m_count == b.m_count);
+	for (int32 i = 0; i < a.m_count; ++i)
+	{
+		CHECK(a.m_vertices[i].x == b.m_vertices[i].x);
+		CHECK(a.m_vertices[i].y == b.m_vertices[i].y);
+	}
+}
+
+
+SCENARIO("Loading a b2PolygonShape from JS", "[loadPolygon]")
+{
+	GIVEN("a duktape context")
+	{
+		constexpr char const* const pFullValidJSON = R"JSON({
+			"vertices": [
+				[-1, -1],
+				[ 1, -1],
+				[ 1,  1],
+				[-1,  1]
+			]
+		})JSON";
+		constexpr char const* const pPartialValidJSON = "{}";
+		constexpr char const* const pInvalidJSON = "{\"vertices\": [[1]]}";
+
+		testObjectLoader<b2PolygonShape>(
+			ds::loadPolygon,
+			pInvalidJSON,
+			pFullValidJSON,
+			pPartialValidJSON,
+			checkPolygonShapeFullyLoaded,
+			checkPolygonShapePartiallyLoaded,
+			checkPolygonsEqual
+		);
+	}
+}

@@ -411,22 +411,27 @@ loadPolygon(
 		return false;
 	}
 
-	bool valid = (
-		duk_get_prop_string(pContext, polygonIdx, "vertices") &&
-		duk_is_array(pContext, -1)
-	);
-	if (valid)
+	bool valid = true;
+	if (duk_get_prop_string(pContext, polygonIdx, "vertices"))
 	{
-		b2Vec2 vertices[b2_maxPolygonVertices];
-		duk_size_t const len = duk_get_length(pContext, -1);
-		valid = len < b2_maxPolygonVertices;
-		for (duk_size_t i = 0ul; valid && i < len; ++i)
+		valid = duk_is_array(pContext, -1);
+
+		if (valid)
 		{
-			duk_get_prop_index(pContext, -1, i);
-			valid = loadVec2(pContext, -1, &(vertices[i]));
-			duk_pop(pContext);
+			b2Vec2 vertices[b2_maxPolygonVertices];
+			duk_size_t const len = duk_get_length(pContext, -1);
+			valid = len < b2_maxPolygonVertices;
+			for (duk_size_t i = 0ul; valid && i < len; ++i)
+			{
+				duk_get_prop_index(pContext, -1, i);
+				valid = loadVec2(pContext, -1, &(vertices[i]));
+				duk_pop(pContext);
+			}
+			if (valid)
+			{
+				pShape->Set(vertices, len);
+			}
 		}
-		pShape->Set(vertices, len);
 	}
 	duk_pop(pContext);  // Pop `vertices`.
 	return valid;

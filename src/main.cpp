@@ -12,6 +12,7 @@
 #include <Box2D/Dynamics/b2World.h>
 #include <Box2D/Dynamics/b2Body.h>
 #include <Box2D/Dynamics/b2Fixture.h>
+#include <Box2D/Collision/Shapes/b2CircleShape.h>
 #include <Box2D/Collision/Shapes/b2PolygonShape.h>
 
 #include <easylogging++.h>
@@ -101,6 +102,20 @@ void runScripts()
 	b2FixtureDef fixtureDef;
 	dukdemo::scripting::loadFixtureDefWithoutShape(
 		pContext.get(), duk_normalize_index(pContext.get(), -1), &fixtureDef);
+
+	duk_push_string(pContext.get(), R"JSON({
+		"type": "circle",
+		"radius": 1
+	})JSON");
+	b2CircleShape circle;
+	dukdemo::scripting::loadCircle(pContext.get(), -1, &circle);
+
+	duk_push_string(pContext.get(), R"JSON({
+		"type": "polygon",
+		"vertices": [[-1, -1], [1, -1], [1, 1], [-1, 1]]
+	})JSON");
+	b2PolygonShape polygon;
+	dukdemo::scripting::loadPolygon(pContext.get(), -1, &polygon);
 }
 
 

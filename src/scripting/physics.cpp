@@ -124,6 +124,26 @@ loadOptionalFloatProp(
 
 
 bool
+loadRequiredFloatProp(
+	duk_context* pContext,
+	duk_idx_t ownerIdx,
+	char const* const pPropName,
+	float* pResult
+)
+{
+	bool valid = duk_get_prop_string(pContext, ownerIdx, pPropName);
+	float value = static_cast<float>(duk_get_number(pContext, -1));
+	duk_pop(pContext);
+	if (valid && !std::isnan(value))
+	{
+		*pResult = value;
+		return true;
+	}
+	return false;
+}
+
+
+bool
 loadOptionalInt16Prop(
 	duk_context* pContext,
 	duk_idx_t ownerIdx,

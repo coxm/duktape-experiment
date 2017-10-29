@@ -87,6 +87,24 @@ loadOptionalFloatProp(
 
 
 /**
+ * Load a required b2Vec2 property.
+ *
+ * @param pContext the duktape context.
+ * @param ownerIdx the value stack index of the owning object.
+ * @param pPropName the name of the property to load.
+ * @param pResult a pointer to the float to store values in.
+ * @returns true iff the property was provided and successfully loaded.
+ */
+bool
+loadRequiredFloatProp(
+	duk_context* pContext,
+	duk_idx_t ownerIdx,
+	char const* const pPropName,
+	float* pResult
+);
+
+
+/**
  * Load a 16-bit integer property if provided.
  *
  * @param pContext the duktape context.

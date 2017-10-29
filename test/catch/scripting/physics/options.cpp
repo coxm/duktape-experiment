@@ -195,3 +195,87 @@ SCENARIO("Loading optional float props", "[loadOptionalFloatProp]")
 		);
 	}
 }
+
+
+namespace int16_test {
+	constexpr int16 originalValue = 1234;
+	constexpr int16 newValue = 5678;
+
+	void insertValidJSValue(duk_context* pCtx, duk_idx_t ownerIdx)
+	{
+		duk_push_number(pCtx, newValue);
+		duk_put_prop_string(pCtx, ownerIdx, pPropName);
+	}
+
+	int16 createInitialResult()
+	{
+		return originalValue;
+	}
+
+	void checkResultUnchanged(int16 result)
+	{
+		CHECK(result == Approx(originalValue));
+	}
+
+	void checkChangedResultIsCorrect(int16 result)
+	{
+		CHECK(result == Approx(newValue));
+	}
+} // namespace f
+
+
+SCENARIO("Loading optional int16 props", "[loadOptionalInt16Prop]")
+{
+	GIVEN("a duktape context")
+	{
+		testOptionGetter<int16>(
+			int16_test::insertValidJSValue,
+			ds::loadOptionalInt16Prop,
+			int16_test::createInitialResult,
+			int16_test::checkResultUnchanged,
+			int16_test::checkChangedResultIsCorrect
+		);
+	}
+}
+
+
+namespace uint16_test {
+	constexpr uint16 originalValue = 1234;
+	constexpr uint16 newValue = 5678;
+
+	void insertValidJSValue(duk_context* pCtx, duk_idx_t ownerIdx)
+	{
+		duk_push_number(pCtx, newValue);
+		duk_put_prop_string(pCtx, ownerIdx, pPropName);
+	}
+
+	uint16 createInitialResult()
+	{
+		return originalValue;
+	}
+
+	void checkResultUnchanged(uint16 result)
+	{
+		CHECK(result == Approx(originalValue));
+	}
+
+	void checkChangedResultIsCorrect(uint16 result)
+	{
+		CHECK(result == Approx(newValue));
+	}
+} // namespace f
+
+
+SCENARIO("Loading optional uint16 props", "[loadOptionalInt16Prop]")
+{
+	GIVEN("a duktape context")
+	{
+		testOptionGetter<uint16>(
+			uint16_test::insertValidJSValue,
+			ds::loadOptionalUint16Prop,
+			uint16_test::createInitialResult,
+			uint16_test::checkResultUnchanged,
+			uint16_test::checkChangedResultIsCorrect
+		);
+	}
+}

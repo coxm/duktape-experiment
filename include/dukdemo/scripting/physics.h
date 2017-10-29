@@ -87,6 +87,25 @@ loadOptionalFloatProp(
 
 
 /**
+ * Load a 16-bit integer property if provided.
+ *
+ * @param pContext the duktape context.
+ * @param ownerIdx the value stack index of the owning object.
+ * @param pPropName the name of the property to load.
+ * @param pResult a pointer to the integer to store values in.
+ * @returns false if the property exists but is invalid. In particular note
+ * that `true` is returned if the value is missing.
+ */
+bool
+loadOptionalInt16Prop(
+	duk_context* pContext,
+	duk_idx_t ownerIdx,
+	char const* const pPropName,
+	int16* pResult
+);
+
+
+/**
  * Load a 16-bit unsigned integer property if provided.
  *
  * @param pContext the duktape context.

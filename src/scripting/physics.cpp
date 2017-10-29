@@ -16,24 +16,6 @@
 #include "dukdemo/scripting/physics.h"
 
 
-#define LOAD_OPT_PROPERTY(ctx, ownerIdx, duk_type, pDef, prop, real_type) \
-	if (duk_get_prop_string(pContext, ownerIdx, #prop)) \
-	{ \
-		pDef->prop = static_cast<real_type>( \
-			duk_get_ ## duk_type(ctx, -1) \
-		); \
-	} \
-	duk_pop(pContext);
-
-
-#define LOAD_OPT_VEC2_PROPERTY(ctx, ownerIdx, pDef, prop) \
-	if (duk_get_prop_string(pContext, ownerIdx, #prop)) \
-	{ \
-		loadVec2(pContext, -1, &(pDef->prop)); \
-	} \
-	duk_pop(pContext);
-
-
 namespace dukdemo {
 namespace scripting {
 
@@ -571,7 +553,3 @@ loadChain(duk_context* pContext, duk_idx_t idx, b2ChainShape* pShape)
 
 } // namespace scripting
 } // namespace dukdemo
-
-
-#undef LOAD_OPT_PROPERTY
-#undef LOAD_OPT_VEC2_PROPERTY

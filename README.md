@@ -15,7 +15,7 @@ must be passed through to CMake by defining an approprate variable of the form
 -   [b2Draw](https://github.com/coxm/b2draw) (tested with v1).
 
 ### Build
-As usual, except some dependency are required when configuring CMake. For
+As usual, except some dependencies are required when configuring CMake. For
 example:
 
     mkdir -p build

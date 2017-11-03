@@ -12,7 +12,7 @@
 
 #include "dukdemo/scripting/loaders.h"
 
-#include "./test_utils.h"
+#include "../test_utils.h"
 
 
 namespace ds = dukdemo::scripting;

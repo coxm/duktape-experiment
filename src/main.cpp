@@ -24,7 +24,7 @@
 #include "dukdemo/util/deleters.h"
 #include "dukdemo/render/Context.h"
 #include "dukdemo/render/util.h"
-#include "dukdemo/scripting/physics.h"
+#include "dukdemo/scripting/loaders.h"
 
 
 constexpr int screenWidth{640};

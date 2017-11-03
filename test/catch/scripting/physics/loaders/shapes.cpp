@@ -9,7 +9,7 @@
 
 #include <duktape.h>
 
-#include "dukdemo/scripting/physics.h"
+#include "dukdemo/scripting/loaders.h"
 
 #include "./test_utils.h"
 

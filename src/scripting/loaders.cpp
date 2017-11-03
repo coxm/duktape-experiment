@@ -13,7 +13,7 @@
 
 #include <duktape.h>
 
-#include "dukdemo/scripting/physics.h"
+#include "dukdemo/scripting/loaders.h"
 
 
 namespace dukdemo {
@@ -61,7 +61,7 @@ loadVec2(duk_context* pContext, duk_idx_t vecIdx, b2Vec2* pVec) noexcept
 		return false;
 	}
 
-	pVec->Set(static_cast<float>(x), static_cast<float>(y));
+	pVec->Set(float(x), float(y));
 	return true;
 }
 

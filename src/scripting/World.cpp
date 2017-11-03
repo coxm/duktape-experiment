@@ -6,6 +6,7 @@
 #include <duktape.h>
 
 #include "dukdemo/scripting/util.h"
+#include "dukdemo/scripting/Body.h"
 #include "dukdemo/scripting/World.h"
 #include "dukdemo/scripting/loaders.h"
 
@@ -151,6 +152,63 @@ methods::getGravity(duk_context* pContext)
 	assert(duk_is_array(pContext, 0) && "getGravity requires array argument");
 	auto const* const pWorld = getOwnWorldPtr(pContext);
 	writeVec2ToArray(pContext, 0, pWorld->GetGravity());
+	return 1;
+}
+
+
+duk_ret_t
+methods::createBody(duk_context* pContext)
+{
+	// Stack: [bodyDef].
+	b2BodyDef bodyDef;
+	if (!loadBodyDef(pContext, 0, &bodyDef))
+	{
+		return DUK_RET_TYPE_ERROR;
+	}
+	duk_pop(pContext);
+
+	// Create object.
+	auto const bodyIdx = duk_push_object(pContext);
+	// Stack: [body].
+
+	// Set internal prototype to Body.prototype.
+	duk_get_global_string(pContext, g_bodyProtoSym);
+	duk_set_prototype(pContext, bodyIdx);
+	// Stack: [body].
+
+	// Get the world pointer.
+	duk_push_this(pContext);
+	duk_get_prop_string(pContext, -1, g_ownWorldPtrSym);
+	// Stack: [body, world, pWorld].
+
+	auto* const pWorld = static_cast<b2World*>(duk_get_pointer(pContext, -1));
+	duk_pop(pContext);
+	// Stack: [body, world].
+
+	duk_put_prop_string(pContext, bodyIdx, g_ownWorldPropSym);
+	// Stack: [body].
+
+	// Create the b2Body and add to the JS object.
+	auto* const pBody = pWorld->CreateBody(&bodyDef);
+	duk_push_pointer(pContext, pBody);
+	duk_put_prop_string(pContext, bodyIdx, g_ownWorldPtrSym);
+	// Stack: [body].
+	return 1;
+}
+
+
+duk_ret_t
+methods::destroyBody(duk_context* pContext)
+{
+	body::destroyBodyAt(pContext, 0);
+	return 0;
+}
+
+
+duk_ret_t
+methods::toString(duk_context* pContext)
+{
+	duk_push_string(pContext, "[World]");
 	return 1;
 }
 

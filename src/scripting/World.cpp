@@ -149,11 +149,7 @@ methods::getGravity(duk_context* pContext)
 {
 	assert(duk_is_array(pContext, 0) && "getGravity requires array argument");
 	auto const* const pWorld = getOwnWorldPtr(pContext);
-	auto const gravity{pWorld->GetGravity()};
-	duk_push_number(pContext, gravity.x);
-	duk_put_prop_index(pContext, 0, 0);
-	duk_push_number(pContext, gravity.y);
-	duk_put_prop_index(pContext, 0, 1);
+	writeVec2ToArray(pContext, 0, pWorld->GetGravity());
 	return 1;
 }
 

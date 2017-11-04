@@ -27,14 +27,14 @@ getOwnWorldPtr(duk_context* pContext);
 /**
  * Push a `World` object onto the stack, wrapping an existing @ref b2World.
  *
+ * @note The Box2D world is **not** destroyed after the JS object goes out of
+ * scope. If a finalizer is required, use @ref pushWorldWithFinalizer.
+ *
  * @param pContext the duktape context.
  * @param pWorld a pointer to the Box2D world.
- * @param cleanup whether to add a finalizer to the constructed JS object. If
- * `true`, the @ref b2World instance will be properly destructed when the JS
- * object is destroyed. If `false`, the Box2D world is allowed to persist.
  */
-void
-pushWorld(duk_context* pContext, b2World* pWorld, bool cleanup);
+duk_idx_t
+pushWorldWithoutFinalizer(duk_context* pContext, b2World* pWorld);
 
 
 /**
@@ -44,8 +44,8 @@ pushWorld(duk_context* pContext, b2World* pWorld, bool cleanup);
  * @param pWorld a pointer to the Box2D world. The pointer will be released and
  * the @ref b2World instance destroyed when the JS object is finalized.
  */
-void
-pushWorld(duk_context* pContext, std::unique_ptr<b2World> pWorld);
+duk_idx_t
+pushWorldWithFinalizer(duk_context* pContext, std::unique_ptr<b2World> pWorld);
 
 
 /**

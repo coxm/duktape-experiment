@@ -62,24 +62,23 @@ initialiseWorldObject(duk_context* pContext, duk_idx_t objIdx, b2World* pWorld)
 }
 
 
-void
-pushWorld(duk_context* pContext, b2World* pWorld, bool cleanup)
+duk_idx_t
+pushWorldWithoutFinalizer(duk_context* pContext, b2World* pWorld)
 {
 	auto const worldIdx = duk_push_object(pContext);
 	initialiseWorldObject(pContext, worldIdx, pWorld);
-	if (cleanup)
-	{
-		duk_push_c_function(pContext, finalizer, 1);
-		duk_set_finalizer(pContext, -1);
-	}
+	return worldIdx;
 }
 
 
-void
-pushWorld(duk_context* pContext, std::unique_ptr<b2World> pWorld)
+duk_idx_t
+pushWorldWithFinalizer(duk_context* pContext, std::unique_ptr<b2World> pWorld)
 {
-	pushWorld(pContext, pWorld.get(), true);
+	auto const objIdx = pushWorldWithoutFinalizer(pContext, pWorld.get());
+	duk_push_c_function(pContext, finalizer, 1);
+	duk_set_finalizer(pContext, -2);
 	pWorld.release();
+	return objIdx;
 }
 
 
@@ -100,6 +99,8 @@ constructor(duk_context* pContext)
 	auto pWorld = std::make_unique<b2World>(gravity);
 	duk_push_this(pContext);
 	initialiseWorldObject(pContext, 1, pWorld.get());
+	duk_push_c_function(pContext, finalizer, 1);
+	duk_set_finalizer(pContext, -2);
 	pWorld.release();
 	return 0;
 }

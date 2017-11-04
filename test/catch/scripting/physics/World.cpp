@@ -10,6 +10,14 @@
 #include "dukdemo/scripting/World.h"
 
 
+void checkIsWorldInstance(duk_context* pContext, duk_idx_t index)
+{
+	REQUIRE(duk_is_object(pContext, index));
+	duk_get_global_string(pContext, "World");
+	REQUIRE(duk_instanceof(pContext, index, -1));
+}
+
+
 SCENARIO("Creating a Box2D world", "[scripting::world]")
 {
 	GIVEN("a duktape context initialised by the world module")
@@ -35,8 +43,14 @@ SCENARIO("Creating a Box2D world", "[scripting::world]")
 
 		WHEN("we create a world in JS")
 		{
-			duk_eval_string_noresult(
-				pContext.get(), "world = new World([1, 2]);");
+			duk_eval_string(pContext.get(), "world = new World([1, 2]);");
+
+			THEN("the object is an instanceof World")
+			{
+				REQUIRE(duk_is_object(pContext.get(), -1));
+				duk_get_global_string(pContext.get(), "World");
+				REQUIRE(duk_instanceof(pContext.get(), -2, -1));
+			}
 
 			THEN("the gravity is correctly set")
 			{
@@ -53,13 +67,12 @@ SCENARIO("Creating a Box2D world", "[scripting::world]")
 
 			THEN("the gravity can be obtained via getGravity()")
 			{
-				constexpr duk_idx_t vecIdx = 0;
+				auto const vecIdx = duk_get_top(pContext.get());
 				duk_eval_string(pContext.get(), "world.getGravity([]);");
-				REQUIRE(duk_get_top(pContext.get()) == 1);
 
 				// Ensure the result is an appropriate array.
 				REQUIRE(duk_is_array(pContext.get(), vecIdx));
-				REQUIRE(duk_get_length(pContext.get(), 0) == 2);
+				REQUIRE(duk_get_length(pContext.get(), vecIdx) == 2);
 
 				duk_get_prop_index(pContext.get(), vecIdx, 0);
 				duk_get_prop_index(pContext.get(), vecIdx, 1);
@@ -68,6 +81,59 @@ SCENARIO("Creating a Box2D world", "[scripting::world]")
 				auto const y = float(duk_get_number(pContext.get(), -1));
 				CHECK(x == Approx(1.0f));
 				CHECK(y == Approx(2.0f));
+			}
+		}
+
+		WHEN("we use pushWorldWithFinalizer")
+		{
+			using dukdemo::scripting::world::pushWorldWithFinalizer;
+			auto const index = pushWorldWithFinalizer(
+				pContext.get(),
+				std::make_unique<b2World>(b2Vec2{0.0f, 0.0f})
+			);
+
+			THEN("a World instance is constructed")
+			{
+				checkIsWorldInstance(pContext.get(), index);
+			}
+			THEN("the world is pushed to the stack top")
+			{
+				CHECK(index + 1 == duk_get_top(pContext.get()));
+			}
+			THEN("the world has a finalizer")
+			{
+				dukdemo::scripting::world::pushWorldWithFinalizer(
+					pContext.get(),
+					std::make_unique<b2World>(b2Vec2{0.0f, 0.0f})
+				);
+				duk_get_finalizer(pContext.get(), index);
+				auto* const pFunc = duk_get_c_function(pContext.get(), -1);
+				REQUIRE(bool(pFunc));
+			}
+		}
+
+		WHEN("we use pushWorldWithoutFinalizer")
+		{
+			using dukdemo::scripting::world::pushWorldWithoutFinalizer;
+			b2World world{b2Vec2{0.0f, 0.0f}};
+			auto const index = pushWorldWithoutFinalizer(
+				pContext.get(), &world);
+
+			THEN("a World instance is constructed")
+			{
+				REQUIRE(duk_is_object(pContext.get(), index));
+				duk_get_global_string(pContext.get(), "World");
+				REQUIRE(duk_instanceof(pContext.get(), index, -1));
+			}
+			THEN("the world is pushed to the stack top")
+			{
+				CHECK(index + 1 == duk_get_top(pContext.get()));
+			}
+			THEN("the world does not have a finalizer")
+			{
+				duk_get_finalizer(pContext.get(), index);
+				auto* const pFunc = duk_get_c_function(pContext.get(), -1);
+				REQUIRE(!bool(pFunc));
 			}
 		}
 	}

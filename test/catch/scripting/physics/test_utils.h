@@ -1,3 +1,5 @@
+#ifndef DUKDEMO_TEST__CATCH__SCRIPTING__PHYSICS__TEST_UTILS__H
+#define DUKDEMO_TEST__CATCH__SCRIPTING__PHYSICS__TEST_UTILS__H
 #include <memory>
 
 #include <duktape.h>
@@ -21,3 +23,4 @@ pushJSONObject(duk_context* pContext, char const* const pJSON)
 
 
 } // namespace testutils
+#endif // #ifndef DUKDEMO_TEST__CATCH__SCRIPTING__PHYSICS__TEST_UTILS__H

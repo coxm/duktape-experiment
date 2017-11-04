@@ -1,3 +1,5 @@
+#ifndef DUKDEMO_INCLUDE__DUKDEMO__SCRIPTING__LOADERS__H
+#define DUKDEMO_INCLUDE__DUKDEMO__SCRIPTING__LOADERS__H
 #include "Box2D/Common/b2Math.h"
 #include <Box2D/Collision/Shapes/b2Shape.h>
 
@@ -331,3 +333,4 @@ loadChain(
 
 } // namespace scripting
 } // namespace dukdemo
+#endif // #ifndef DUKDEMO_INCLUDE__DUKDEMO__SCRIPTING__LOADERS__H

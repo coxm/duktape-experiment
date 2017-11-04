@@ -5,6 +5,7 @@
 
 #include <duktape.h>
 
+#include "dukdemo/util/deleters.h"
 #include "dukdemo/scripting/util.h"
 #include "dukdemo/scripting/Body.h"
 #include "dukdemo/scripting/World.h"
@@ -29,6 +30,8 @@ init(duk_context* pContext)
 
 	PUSH_METHOD(setGravity, 2);
 	PUSH_METHOD(getGravity, 1);
+	PUSH_METHOD(createBody, 1);
+	PUSH_METHOD(destroyBody, 1);
 #undef PUSH_METHOD
 
 	duk_dup(pContext, prototypeIdx); // [ctor, proto, proto].
@@ -53,9 +56,8 @@ getOwnWorldPtr(duk_context* pContext)
 
 
 void
-initialiseWorldObject(duk_context* pContext, duk_idx_t objIdx, b2World* pWorld)
+initWorldObject(duk_context* pContext, duk_idx_t objIdx, b2World* pWorld)
 {
-	assert(objIdx >= 0 && "Index must be non-negative");
 	duk_get_global_string(pContext, g_worldProtoSym);
 	duk_set_prototype(pContext, objIdx);
 	duk_push_pointer(pContext, pWorld);
@@ -67,7 +69,7 @@ duk_idx_t
 pushWorldWithoutFinalizer(duk_context* pContext, b2World* pWorld)
 {
 	auto const worldIdx = duk_push_object(pContext);
-	initialiseWorldObject(pContext, worldIdx, pWorld);
+	initWorldObject(pContext, worldIdx, pWorld);
 	return worldIdx;
 }
 
@@ -99,7 +101,7 @@ constructor(duk_context* pContext)
 
 	auto pWorld = std::make_unique<b2World>(gravity);
 	duk_push_this(pContext);
-	initialiseWorldObject(pContext, 1, pWorld.get());
+	initWorldObject(pContext, 1, pWorld.get());
 	duk_push_c_function(pContext, finalizer, 1);
 	duk_set_finalizer(pContext, -2);
 	pWorld.release();
@@ -165,35 +167,21 @@ methods::createBody(duk_context* pContext)
 	{
 		return DUK_RET_TYPE_ERROR;
 	}
-	duk_pop(pContext);
+	duk_pop(pContext); // [].
 
-	// Create object.
-	auto const bodyIdx = duk_push_object(pContext);
-	// Stack: [body].
-
-	// Set internal prototype to Body.prototype.
-	duk_get_global_string(pContext, g_bodyProtoSym);
-	duk_set_prototype(pContext, bodyIdx);
-	// Stack: [body].
-
-	// Get the world pointer.
 	duk_push_this(pContext);
 	duk_get_prop_string(pContext, -1, g_ownWorldPtrSym);
-	// Stack: [body, world, pWorld].
-
 	auto* const pWorld = static_cast<b2World*>(duk_get_pointer(pContext, -1));
-	duk_pop(pContext);
-	// Stack: [body, world].
+	duk_pop(pContext); // Stack: [world].
 
-	duk_put_prop_string(pContext, bodyIdx, g_ownWorldPropSym);
-	// Stack: [body].
+	std::unique_ptr<b2Body, util::B2Deleter> pBody{
+		pWorld->CreateBody(&bodyDef)};
+	body::pushBodyWithFinalizer(pContext, pBody.get());
+	pBody.release(); // Stack: [world, body].
 
-	// Create the b2Body and add to the JS object.
-	auto* const pBody = pWorld->CreateBody(&bodyDef);
-	duk_push_pointer(pContext, pBody);
-	duk_put_prop_string(pContext, bodyIdx, g_ownWorldPtrSym);
-	// Stack: [body].
-	return 1;
+	duk_swap_top(pContext, -2); // Stack: [body, world].
+	duk_put_prop_string(pContext, -2, "world");
+	return 1; // Stack: [body].
 }
 
 

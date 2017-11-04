@@ -1,3 +1,5 @@
+#ifndef DUKDEMO_INCLUDE__DUKDEMO__SCRIPTING__WORLD__H
+#define DUKDEMO_INCLUDE__DUKDEMO__SCRIPTING__WORLD__H
 #include <duk_config.h>
 
 
@@ -88,7 +90,32 @@ duk_ret_t
 getGravity(duk_context* pContext);
 
 
+/**
+ * Create a new `Body` object.
+ *
+ * Requires a object representing a @ref b2BodyDef. The corresponding @ref
+ * b2Body object is inserted into the @ref b2World.
+ */
+duk_ret_t
+createBody(duk_context* pContext);
+
+
+/**
+ * Destroy a `Body`, removing its @ref b2Body.
+ *
+ * Requires a `Body` as the sole argument.
+ */
+duk_ret_t
+destroyBody(duk_context* pContext);
+
+
+/** Return a string representing this `World`. */
+duk_ret_t
+toString(duk_context* pContext);
+
+
 } // namespace methods
 } // namespace world
 } // namespace scripting
 } // namespace dukdemo
+#endif // #ifndef DUKDEMO_INCLUDE__DUKDEMO__SCRIPTING__WORLD__H

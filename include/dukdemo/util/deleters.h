@@ -1,10 +1,10 @@
 #ifndef DUKDEMO_INCLUDE__DUKDEMO__UTIL__DELETERS__H
 #define DUKDEMO_INCLUDE__DUKDEMO__UTIL__DELETERS__H
-#include <SDL2/SDL.h>
 #include <duk_config.h>
 
 
 struct SDL_Window;
+class b2Body;
 
 
 namespace dukdemo {
@@ -25,7 +25,13 @@ struct SDLWindowDeleter
 
 struct GLContextDeleter
 {
-	void operator()(SDL_GLContext pGLContext) noexcept;
+	void operator()(void* pGLContext) noexcept;
+};
+
+
+struct B2Deleter
+{
+	void operator()(b2Body* pBody) noexcept;
 };
 
 

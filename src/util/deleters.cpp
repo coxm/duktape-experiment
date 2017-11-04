@@ -1,4 +1,8 @@
 #include <SDL2/SDL_video.h>
+
+#include <Box2D/Dynamics/b2Body.h>
+#include <Box2D/Dynamics/b2World.h>
+
 #include <duktape.h>
 
 #include "dukdemo/util/deleters.h"
@@ -29,6 +33,18 @@ GLContextDeleter::operator()(SDL_GLContext pGLContext)
 	noexcept
 {
 	SDL_GL_DeleteContext(pGLContext);
+}
+
+
+void
+B2Deleter::operator()(b2Body* pBody)
+	noexcept
+{
+	auto* const pWorld = pBody->GetWorld();
+	if (pWorld)
+	{
+		pWorld->DestroyBody(pBody);
+	}
 }
 
 

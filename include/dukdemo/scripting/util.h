@@ -1,3 +1,5 @@
+#ifndef DUKDEMO_INCLUDE__DUKDEMO__SCRIPTING__UTIL__H
+#define DUKDEMO_INCLUDE__DUKDEMO__SCRIPTING__UTIL__H
 #include <duk_config.h>
 
 
@@ -34,3 +36,4 @@ writeVec2ToArray(duk_context* pContext, duk_idx_t arrayIdx, b2Vec2 const& vec);
 
 } // namespace scripting
 } // namespace dukdemo
+#endif // #ifndef DUKDEMO_INCLUDE__DUKDEMO__SCRIPTING__UTIL__H
